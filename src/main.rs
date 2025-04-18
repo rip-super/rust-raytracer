@@ -1,3 +1,5 @@
+use raytracer::{write_color, Color};
+
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -27,11 +29,8 @@ fn main() -> std::io::Result<()> {
             let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
             let b = 0.25;
 
-            let ir = (255.999 * r) as i32;
-            let ig = (255.999 * g) as i32;
-            let ib = (255.999 * b) as i32;
-
-            writeln!(writer, "{} {} {}", ir, ig, ib)?;
+            let pixel_color = Color::new(r, g, b);
+            write_color(&mut writer, pixel_color);
         }
     }
 
