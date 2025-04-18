@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::utils;
 
 use std::fmt::{Display, Formatter, Result};
@@ -53,7 +51,6 @@ impl Vec3 {
 
     pub fn near_zero(&self) -> bool {
         const EPS: f64 = 1.0e-8;
-        // Return true if the vector is close to zero in all dimensions
         self.e[0].abs() < EPS && self.e[1].abs() < EPS && self.e[2].abs() < EPS
     }
 }

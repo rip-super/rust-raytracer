@@ -27,7 +27,6 @@ impl Material for Lambertian {
     fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
         let mut scatter_direction = rec.normal + vec3::random_unit_vector();
 
-        // Catch degenerate scatter direction
         if scatter_direction.near_zero() {
             scatter_direction = rec.normal;
         }
@@ -70,7 +69,7 @@ impl Material for Metal {
 }
 
 pub struct Dielectric {
-    ir: f64, // Index of refraction
+    ir: f64,
 }
 
 impl Dielectric {
@@ -81,7 +80,7 @@ impl Dielectric {
     }
 
     fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
-        // Use Schlick's approximation for reflectance
+        // Schlick's approximation
         let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
         r0 = r0 * r0;
         r0 + (1.0 - r0) * f64::powf(1.0 - cosine, 5.0)
