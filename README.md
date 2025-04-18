@@ -8,6 +8,7 @@ in Rust instead of C++
 
 ## Features
 - PPM Image format to display images
+- Display images in a window
 - Anti-Aliasing
 - Parallelism with Rayon
 - Customizable scene layout and camera position
