@@ -1,7 +1,13 @@
+#![allow(unused)]
+
 use raytracer as rt;
 
 use rt::color::{write_color, Color};
+use rt::hittable::{HitRecord, Hittable};
+use rt::hittable_list::HittableList;
 use rt::ray::Ray;
+use rt::sphere::Sphere;
+use rt::utils;
 use rt::vec3::{dot, unit_vector, Point3, Vec3};
 
 use indicatif::{ProgressBar, ProgressStyle};
@@ -14,22 +20,21 @@ const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
 
 fn hit_sphere(center: Point3, radius: f64, r: &Ray) -> f64 {
     let oc = r.origin() - center;
-    let a = dot(r.direction(), r.direction());
-    let b = 2.0 * dot(oc, r.direction());
-    let c = dot(oc, oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-
+    let a = r.direction().length_squared();
+    let half_b = dot(oc, r.direction());
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
     if discriminant < 0.0 {
         -1.0
     } else {
-        (-b - f64::sqrt(discriminant)) / (2.0 * a)
+        (-half_b - f64::sqrt(discriminant)) / a
     }
 }
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+
+fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    let mut rec = HitRecord::new();
+    if world.hit(r, 0.0, f64::INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
     }
 
     let unit_direction = unit_vector(r.direction());
@@ -51,6 +56,12 @@ fn main() -> std::io::Result<()> {
             .progress_chars("==> "),
     );
 
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+
+    // Camera
     let viewport_height = 2.0;
     let viewport_width = ASPECT_RATIO * viewport_height;
     let focal_length = 1.0;
@@ -71,7 +82,7 @@ fn main() -> std::io::Result<()> {
                 origin,
                 lower_left_corner + u * horizontal + v * vertical - origin,
             );
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             write_color(&mut writer, pixel_color);
         }
     }
