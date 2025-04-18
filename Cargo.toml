@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 indicatif = "0.17.11"
+rand = "0.9.1"
