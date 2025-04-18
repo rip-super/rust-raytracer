@@ -11,7 +11,7 @@ use rt::{
     material::{Dielectric, Lambertian, Metal},
     ray::Ray,
     sphere::Sphere,
-    vec3::Point3,
+    vec3::{Point3, Vec3},
 };
 
 // modules
@@ -82,7 +82,6 @@ fn main() -> std::io::Result<()> {
     );
 
     // World
-    // World
     let mut world = HittableList::new();
 
     let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
@@ -93,35 +92,37 @@ fn main() -> std::io::Result<()> {
     world.add(Box::new(Sphere::new(
         Point3::new(0.0, -100.5, -1.0),
         100.0,
-        material_ground.clone(),
+        material_ground,
     )));
-
     world.add(Box::new(Sphere::new(
         Point3::new(0.0, 0.0, -1.0),
         0.5,
-        material_center.clone(),
+        material_center,
     )));
-
     world.add(Box::new(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
         0.5,
         material_left.clone(),
     )));
-
     world.add(Box::new(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
         -0.45,
-        material_left.clone(),
+        material_left,
     )));
-
     world.add(Box::new(Sphere::new(
         Point3::new(1.0, 0.0, -1.0),
         0.5,
-        material_right.clone(),
+        material_right,
     )));
 
     // Camera
-    let camera = Camera::new();
+    let camera = Camera::new(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0,
+        ASPECT_RATIO,
+    );
 
     // Render
     for j in (0..IMAGE_HEIGHT).rev() {
