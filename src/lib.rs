@@ -1,6 +1,3 @@
-// lib.rs
-mod color;
-mod vec3;
-
-pub use color::*;
-pub use vec3::*;
+pub mod color;
+pub mod ray;
+pub mod vec3;
