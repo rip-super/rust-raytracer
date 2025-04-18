@@ -8,18 +8,20 @@ use rt::{
     color::Color,
     hittable::{HitRecord, Hittable},
     hittable_list::HittableList,
+    material::{Lambertian, Metal},
     ray::Ray,
     sphere::Sphere,
     vec3::Point3,
 };
 
 // modules
-use rt::{color, hittable, hittable_list, ray, sphere, utils, vec3};
+use rt::{color, hittable, hittable_list, material, ray, sphere, utils, vec3};
 
 // external crates
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::rc::Rc;
 
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
 const IMAGE_WIDTH: i32 = 400;
@@ -47,8 +49,17 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
 
     let mut rec = HitRecord::new();
     if world.hit(r, 0.001, f64::INFINITY, &mut rec) {
-        let direction = rec.normal + vec3::random_unit_vector();
-        return 0.5 * ray_color(&Ray::new(rec.p, direction), world, depth - 1);
+        let mut attenuation = Color::default();
+        let mut scattered = Ray::default();
+        if rec
+            .mat
+            .as_ref()
+            .unwrap()
+            .scatter(r, &rec, &mut attenuation, &mut scattered)
+        {
+            return attenuation * ray_color(&scattered, world, depth - 1);
+        }
+        return Color::new(0.0, 0.0, 0.0);
     }
 
     let unit_direction = vec3::unit_vector(r.direction());
@@ -67,13 +78,36 @@ fn main() -> std::io::Result<()> {
         ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len} ({percent}%)")
             .unwrap()
-            .progress_chars("==> "),
+            .progress_chars("=> "),
     );
 
     // World
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.1));
+    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, -100.5, -1.0),
+        100.0,
+        material_ground,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0.0, 0.0, -1.0),
+        0.5,
+        material_center,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.5,
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(1.0, 0.0, -1.0),
+        0.5,
+        material_right,
+    )));
 
     // Camera
     let camera = Camera::new();
